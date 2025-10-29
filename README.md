@@ -1,7 +1,7 @@
 # hades-simulator
 Simulation of a queuing system (СМО) for the “Software Architecture” course (SPbPU).
 
-### Сиквенс-диаграмма
+### Сиквенс-диаграмма (updated)
 ![sequenceDiagram](docs/sequenceDiagram.png)
 
 ### Диаграмма классов
