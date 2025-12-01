@@ -4,7 +4,7 @@ import main.utils.SoulState;
 
 public class Soul {
     private int sourceId;
-    private int id;
+    private String id;
     private final double spawnTime;     // момент появления в мире Аида
 
     private Double bufferEnterTime;     // когда попала в буфер
@@ -13,14 +13,14 @@ public class Soul {
 
     private SoulState state;
 
-    public Soul(int sourceId, int id, double spawnTime){
+    public Soul(int sourceId, String id, double spawnTime){
         this.sourceId = sourceId;
         this.id = id;
         this.spawnTime = spawnTime;
         state = SoulState.NEW;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
