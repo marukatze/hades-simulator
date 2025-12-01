@@ -13,8 +13,8 @@ public class Soul {
 
     private SoulState state;
 
-    public Soul(int sourceIdid, int id, double spawnTime){
-        this.sourceId = sourceIdid;
+    public Soul(int sourceId, int id, double spawnTime){
+        this.sourceId = sourceId;
         this.id = id;
         this.spawnTime = spawnTime;
         state = SoulState.NEW;
