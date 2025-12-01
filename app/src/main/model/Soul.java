@@ -19,4 +19,36 @@ public class Soul {
         this.spawnTime = spawnTime;
         state = SoulState.NEW;
     }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getSourceId() {
+        return sourceId;
+    }
+
+    public double getSpawnTime() {
+        return spawnTime;
+    }
+
+    public SoulState getState() {
+        return state;
+    }
+
+    public void setState(SoulState newState) {
+        this.state = newState;
+    }
+
+    public void setBufferEnterTime(double time) {
+        this.bufferEnterTime = time;
+    }
+
+    public void setServiceStartTime(double time) {
+        this.serviceStartTime = time;
+    }
+
+    public void setServiceFinishTime(double time) {
+        this.serviceFinishTime = time;
+    }
 }
