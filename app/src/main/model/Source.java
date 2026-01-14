@@ -3,44 +3,63 @@ package main.model;
 import main.simulation.Event;
 import main.simulation.EventCalendar;
 import main.simulation.EventType;
-import main.simulation.Simulation;
 
 import java.util.Random;
 
 public class Source {
-    private final int id;                     // Номер источника (важен для приоритетов)
-    private final Random random = new Random();
-    private int soulsCounter;
-    private final double arrivalMin;          // Минимальный интервал
-    private final double arrivalMax;          // Максимальный интервал
-    private final EventCalendar calendar;     // Чтобы планировать новые события
 
-    public Source(int id, double arrivalMin, double arrivalMax, EventCalendar calendar, Simulation simulation) {
-        this.id = id;
+    private final int sourceId;
+    private int innerCounter = 0;
+
+    private final double arrivalMin;
+    private final double arrivalMax;
+
+    private final Random random = new Random();
+    private final EventCalendar calendar;
+
+    public Source(int sourceId,
+                  double arrivalMin,
+                  double arrivalMax,
+                  EventCalendar calendar) {
+
+        this.sourceId = sourceId;
         this.arrivalMin = arrivalMin;
         this.arrivalMax = arrivalMax;
         this.calendar = calendar;
-        soulsCounter = 0;
     }
 
-    public int getId() {
-        return id;
+    public int getSourceId() {
+        return sourceId;
     }
 
-    public Soul generateSoul(double currentTime) {
-        soulsCounter++;
-        return new Soul(id, id + "-" + soulsCounter, currentTime);
+    /**
+     * Создаёт новую душу с ID вида sourceId-innerId
+     */
+    private Soul generateSoul() {
+        innerCounter++;
+        String soulId = sourceId + "-" + innerCounter;
+        return new Soul(soulId);
     }
 
-    // Планирование следующего ARRIVAL-события
+    /**
+     * Планирует событие прибытия души
+     */
     public void scheduleNextArrival(double currentTime) {
-        double nextInterval = arrivalMin + (arrivalMax - arrivalMin) * random.nextDouble();
-        double eventTime = currentTime + nextInterval;
 
-        Soul newSoul = generateSoul(currentTime);
-        Event arrivalEvent = new Event(eventTime, EventType.ARRIVAL, newSoul);
+        // равномерное распределение
+        double interval =
+                arrivalMin + (arrivalMax - arrivalMin) * random.nextDouble();
 
-        calendar.addEvent(arrivalEvent);  // кладём в календарь
+        double eventTime = currentTime + interval;
+
+        Soul soul = generateSoul();
+
+        Event arrivalEvent = new Event(
+                eventTime,
+                EventType.SOUL_ARRIVED,
+                soul
+        );
+
+        calendar.add(arrivalEvent);
     }
 }
-
