@@ -3,27 +3,19 @@ package main.simulation;
 import java.util.PriorityQueue;
 
 public class EventCalendar {
-    private final PriorityQueue<Event> queue = new PriorityQueue<>();
 
-    // Добавляем событие
-    public void addEvent(Event event) {
-        queue.add(event);
+    private final PriorityQueue<Event> events =
+            new PriorityQueue<>((a, b) -> Double.compare(a.getTime(), b.getTime()));
+
+    public void add(Event event) {
+        events.add(event);
     }
 
-    // Получаем и убираем ближайшее событие
-    public Event nextEvent() {
-        return queue.poll();
+    public boolean isEmpty() {
+        return events.isEmpty();
     }
 
-    // Проверка, есть ли события
-    public boolean hasNext() {
-        return !queue.isEmpty();
-    }
-
-    // Получить текущее количество событий (для статистики)
-    public int size() {
-        return queue.size();
+    public Event next() {
+        return events.poll();
     }
 }
-
-
