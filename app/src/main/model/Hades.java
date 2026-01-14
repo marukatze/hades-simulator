@@ -13,6 +13,7 @@ public class Hades {
     private final Cerberus cerberus;
     private final List<Charon> charons;
     private final EventCalendar calendar;
+    private int lastCharonIndex = -1; // индекс последнего занятого Харона
 
     public Hades(Buffer buffer,
                  Cerberus cerberus,
@@ -36,7 +37,7 @@ public class Hades {
 
             case HADES_DECISION -> {
                 Soul soul = chooseSoulFromBuffer();
-                Charon charon = chooseFreeCharon();
+                Charon charon = chooseCharon();
 
                 if (soul != null && charon != null) {
                     soul.setStatus(SoulStatus.SENT_TO_CHARON);
@@ -115,10 +116,20 @@ public class Hades {
     }
 
 
-    private Charon chooseFreeCharon() {
-        for (Charon c : charons) {
-            if (!c.isBusy()) return c;
+    private Charon chooseCharon() {
+        int n = charons.size();
+
+        for (int step = 1; step <= n; step++) {
+            int index = (lastCharonIndex + step) % n;
+            Charon c = charons.get(index);
+
+            if (!c.isBusy()) {
+                lastCharonIndex = index; // обновляем кольцо
+                return c;
+            }
         }
-        return null;
+
+        return null; // все Хароны заняты
     }
+
 }
