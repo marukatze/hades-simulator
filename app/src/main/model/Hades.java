@@ -10,11 +10,17 @@ import java.util.List;
 public class Hades {
 
     private final Buffer buffer;
+    private final Cerberus cerberus;
     private final List<Charon> charons;
     private final EventCalendar calendar;
 
-    public Hades(Buffer buffer, List<Charon> charons, EventCalendar calendar) {
+    public Hades(Buffer buffer,
+                 Cerberus cerberus,
+                 List<Charon> charons,
+                 EventCalendar calendar) {
+
         this.buffer = buffer;
+        this.cerberus = cerberus;
         this.charons = charons;
         this.calendar = calendar;
     }
@@ -25,17 +31,7 @@ public class Hades {
 
             case SOUL_ARRIVED -> {
                 Soul soul = event.getSoul();
-
-                if (buffer.hasSpace()) {
-                    buffer.addSoul(soul);
-                    soul.setStatus(SoulStatus.IN_BUFFER);
-                    System.out.println("➕ Душа " + soul.getId() + " попала в буфер");
-                } else {
-                    soul.setStatus(SoulStatus.REJECTED);
-                    System.out.println("❌ Душа " + soul.getId() + " отклонена Цербером");
-                }
-
-                calendar.add(new Event(event.getTime(), EventType.HADES_DECISION, null));
+                cerberus.handleArrival(soul);
             }
 
             case HADES_DECISION -> {
@@ -44,17 +40,26 @@ public class Hades {
 
                 if (soul != null && charon != null) {
                     soul.setStatus(SoulStatus.SENT_TO_CHARON);
-                    System.out.println("➡️ Аид отправил душу " + soul.getId() + " к " + charon.getName());
 
-                    Event finishEvent = charon.transport(soul, event.getTime());
-                    calendar.add(finishEvent);
+                    System.out.println(
+                            "👑 Hades sends soul " + soul.getId() +
+                                    " to " + charon.getName()
+                    );
+
+                    Event finish =
+                            charon.transport(soul, event.getTime());
+
+                    calendar.add(finish);
                 }
             }
 
             case CHARON_FINISHED -> {
                 Soul soul = event.getSoul();
                 soul.setStatus(SoulStatus.DONE);
-                System.out.println("✅ Душа " + soul.getId() + " доставлена");
+
+                System.out.println(
+                        "🏁 Soul " + soul.getId() + " delivered"
+                );
 
                 for (Charon c : charons) {
                     if (c.isBusy()) {
@@ -63,14 +68,20 @@ public class Hades {
                     }
                 }
 
-                calendar.add(new Event(event.getTime(), EventType.HADES_DECISION, null));
+                calendar.add(new Event(
+                        event.getTime(),
+                        EventType.HADES_DECISION,
+                        null
+                ));
             }
         }
     }
 
     private Soul chooseSoulFromBuffer() {
         for (Soul s : buffer.getSouls()) {
-            if (s != null) return s;
+            if (s != null && s.getState() == SoulStatus.IN_BUFFER) {
+                return s;
+            }
         }
         return null;
     }
