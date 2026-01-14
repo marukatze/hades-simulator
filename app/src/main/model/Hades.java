@@ -1,21 +1,40 @@
 package main.model;
 
-public class Hades {
-    private final String name;
-    private final Buffer buffer;
+import main.utils.SoulState;
 
-    public Hades(String name, Buffer buffer) {
+public class Hades {
+
+    private final String name;
+
+    public Hades(String name) {
         this.name = name;
-        this.buffer = buffer;
     }
 
-    public void processNextSoul() throws InterruptedException {
-        int soul = buffer.take();
+    /**
+     * Обработать переданную душу
+     */
+    public void process(Soul soul) {
+        if (soul == null) {
+            throw new IllegalArgumentException("Hades не может судить пустоту");
+        }
+
+        System.out.println(
+                "🔥 Hades " + name + " судит душу " + soul.getId()
+        );
+
         judgeSoul(soul);
     }
 
-    private void judgeSoul(int soul) {
-        System.out.println("🔥 Hades " + name + " судит душу #" + soul);
+    private void judgeSoul(Soul soul) {
+        // тут позже:
+        // - время обработки
+        // - исход (рай / ад / реинкарнация / лодка)
+        // - генерация Event
+        soul.setState(SoulState.IN_SERVICE);
+    }
+
+    public String getName() {
+        return name;
     }
 }
 
