@@ -5,10 +5,13 @@ import main.simulation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
+
+        Scanner scanner = new Scanner(System.in);
 
         // 1️⃣ Создаём календарь
         EventCalendar calendar = new EventCalendar();
@@ -36,12 +39,25 @@ public class Main {
         // 7️⃣ Инициализация (стартовые события)
         sim.init();
 
-        // 8️⃣ Пошаговая симуляция (10 шагов для примера)
-        for (int i = 0; i < 10; i++) {
+        System.out.println("=== START SIMULATION ===");
+
+        // 8️⃣ Пошаговая симуляция (интерактивно)
+        while (!calendar.isEmpty()) {
+            System.out.println("\n--- Press Enter to process next event ---");
+            scanner.nextLine(); // ждём Enter
+
+            // обрабатываем следующий шаг
             sim.step();
 
-            // вывод текущего состояния буфера
+            // вывод состояния буфера
             System.out.println(buffer);
+
+            // вывод состояния Харонов
+            System.out.print("Charons: ");
+            for (Charon c : charons) {
+                System.out.print(c.getName() + (c.isBusy() ? "[BUSY] " : "[FREE] "));
+            }
+            System.out.println();
         }
 
         System.out.println("\n=== SIMULATION END ===");
