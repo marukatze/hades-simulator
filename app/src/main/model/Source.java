@@ -35,10 +35,10 @@ public class Source {
     /**
      * Создаёт новую душу с ID вида sourceId-innerId
      */
-    private Soul generateSoul() {
+    private Soul generateSoul(double currentTime) {
         innerCounter++;
         String soulId = sourceId + "-" + innerCounter;
-        return new Soul(soulId);
+        return new Soul(soulId, sourceId, currentTime);
     }
 
     /**
@@ -52,7 +52,7 @@ public class Source {
 
         double eventTime = currentTime + interval;
 
-        Soul soul = generateSoul();
+        Soul soul = generateSoul(currentTime);
 
         Event arrivalEvent = new Event(
                 eventTime,

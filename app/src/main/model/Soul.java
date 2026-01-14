@@ -5,10 +5,14 @@ import main.utils.SoulStatus;
 public class Soul {
 
     private final String id;
+    private final int sourceId;
+    private final double arrivalTime;
     private SoulStatus state;
 
-    public Soul(String id) {
+    public Soul(String id, int sourceId, double arrivalTime) {
         this.id = id;
+        this.sourceId = sourceId;
+        this.arrivalTime = arrivalTime;
         this.state = SoulStatus.NEW;
     }
 
@@ -16,7 +20,15 @@ public class Soul {
         return id;
     }
 
-    public SoulStatus getState() {
+    public int getSourceId() {
+        return sourceId;
+    }
+
+    public double getArrivalTime() {
+        return arrivalTime;
+    }
+
+    public SoulStatus getStatus() {
         return state;
     }
 

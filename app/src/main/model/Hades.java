@@ -78,13 +78,42 @@ public class Hades {
     }
 
     private Soul chooseSoulFromBuffer() {
-        for (Soul s : buffer.getSouls()) {
-            if (s != null && s.getState() == SoulStatus.IN_BUFFER) {
-                return s;
+
+        Soul best = null;
+        int bestIndex = -1;
+
+        for (int i = 0; i < buffer.getCapacity(); i++) {
+            Soul s = buffer.getAt(i);
+
+            if (s == null || s.getStatus() != SoulStatus.IN_BUFFER) continue;
+
+            if (best == null) {
+                best = s;
+                bestIndex = i;
+                continue;
+            }
+
+            // 1️⃣ приоритет по sourceId
+            if (s.getSourceId() < best.getSourceId()) {
+                best = s;
+                bestIndex = i;
+            }
+            // 2️⃣ если источник одинаковый — берём последнюю пришедшую
+            else if (s.getSourceId() == best.getSourceId()
+                    && s.getArrivalTime() > best.getArrivalTime()) {
+
+                best = s;
+                bestIndex = i;
             }
         }
-        return null;
+
+        if (best != null) {
+            buffer.setAt(bestIndex, null); // душа покидает буфер
+        }
+
+        return best;
     }
+
 
     private Charon chooseFreeCharon() {
         for (Charon c : charons) {
