@@ -65,4 +65,14 @@ public class Buffer {
     public int getCapacity() {
         return capacity;
     }
+
+    // Получить душу по индексу (для Cerberus)
+    public Soul getAt(int index) {
+        return slots.get(index);
+    }
+
+    // Положить душу по индексу (для Cerberus)
+    public void setAt(int index, Soul soul) {
+        slots.set(index, soul);
+    }
 }
