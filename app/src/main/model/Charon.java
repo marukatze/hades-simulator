@@ -7,21 +7,24 @@ import main.utils.SoulStatus;
 public class Charon {
 
     private final String name;
+    private final double mu;
     private boolean busy = false;
-
-    public Charon(String name) {
-        this.name = name;
-    }
 
     public boolean isBusy() {
         return busy;
+    }
+
+    public Charon(String name, double mu) {
+        this.name = name;
+        this.mu = mu;
     }
 
     public Event transport(Soul soul, double currentTime) {
         busy = true;
         soul.setStatus(SoulStatus.TRANSPORTING);
 
-        double serviceTime = Math.random() * 5 + 1; // пока заглушка
+        double u = Math.random();
+        double serviceTime = -Math.log(1 - u) / mu;
 
         return new Event(
                 currentTime + serviceTime,
