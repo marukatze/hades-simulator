@@ -2,55 +2,60 @@ package main.simulation;
 
 import main.model.*;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class Simulation {
 
-    private double currentTime = 0.0;
-
     private final EventCalendar calendar;
     private final Hades hades;
     private final List<Source> sources;
+    private double currentTime = 0.0;
+    private boolean initialized = false;
 
-    public Simulation(EventCalendar calendar,
-                      Hades hades,
-                      List<Source> sources) {
-
+    public Simulation(EventCalendar calendar, Hades hades, List<Source> sources) {
         this.calendar = calendar;
         this.hades = hades;
         this.sources = sources;
     }
 
+    // инициализация стартовых событий
     public void init() {
-        // стартовые события от всех источников
-        for (Source source : sources) {
-            source.scheduleNextArrival(currentTime);
+        if (!initialized) {
+            for (Source s : sources) {
+                s.scheduleNextArrival(currentTime);
+            }
+            // первый ход Hades
+            calendar.add(new Event(currentTime, EventType.HADES_DECISION, null));
+            initialized = true;
         }
     }
 
-    public void step() {
-        if (calendar.isEmpty()) {
-            System.out.println("📭 Календарь пуст, симуляция остановлена");
-            return;
-        }
+    // возвращает все события за один шаг времени (currentTime -> currentTime + deltaTime)
+    public List<Event> tick(double deltaTime) {
+        currentTime += deltaTime;
+        List<Event> stepEvents = new ArrayList<>();
 
-        Event event = calendar.next();
-        currentTime = event.getTime();
-
-        System.out.println("\n⏱ Время: " + currentTime);
-        System.out.println("📌 Событие: " + event.getType());
-
-        hades.handle(event);
-
-        // если пришла душа — источник планирует следующую
-        if (event.getType() == EventType.SOUL_ARRIVED) {
-            for (Source source : sources) {
-                source.scheduleNextArrival(currentTime);
+        Iterator<Event> iter = calendar.getEvents().iterator();
+        while (iter.hasNext()) {
+            Event e = iter.next();
+            if (e.getTime() <= currentTime) {
+                hades.handle(e);          // обработка события
+                stepEvents.add(e);        // добавляем для отчета
+                iter.remove();            // удаляем из календаря
             }
         }
+
+        return stepEvents;
     }
 
     public double getCurrentTime() {
         return currentTime;
+    }
+
+    public boolean isFinished() {
+        // Симуляция закончена, когда календарь пуст и буфер пуст, а Хароны свободны
+        return calendar.isEmpty() && hades.isIdle();
     }
 }

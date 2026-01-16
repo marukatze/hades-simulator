@@ -132,4 +132,8 @@ public class Hades {
         return null; // все Хароны заняты
     }
 
+    public boolean isIdle() {
+        // если буфер пуст или нет свободного Харона, считаем idle
+        return buffer.getCurrentSize() == 0 || charons.stream().allMatch(Charon::isBusy);
+    }
 }

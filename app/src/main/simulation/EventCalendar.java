@@ -1,5 +1,7 @@
 package main.simulation;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.PriorityQueue;
 
 public class EventCalendar {
@@ -18,4 +20,9 @@ public class EventCalendar {
     public Event next() {
         return events.poll();
     }
+
+    public List<Event> getEvents() {
+        return new ArrayList<>(events); // возвращаем копию списка событий
+    }
+
 }

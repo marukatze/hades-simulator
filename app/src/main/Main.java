@@ -11,7 +11,8 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Scanner scanner = new Scanner(System.in);
+        boolean stepMode = true; // true = пошаговый режим, false = авто
+        double deltaTime = 1.0;  // единица времени за шаг
 
         // 1️⃣ Создаём календарь
         EventCalendar calendar = new EventCalendar();
@@ -36,30 +37,64 @@ public class Main {
         // 6️⃣ Создаём симуляцию
         Simulation sim = new Simulation(calendar, hades, sources);
 
-        // 7️⃣ Инициализация (стартовые события)
+        // 7️⃣ Инициализация
         sim.init();
 
-        System.out.println("=== START SIMULATION ===");
-
-        // 8️⃣ Пошаговая симуляция (интерактивно)
-        while (!calendar.isEmpty()) {
-            System.out.println("\n--- Press Enter to process next event ---");
-            scanner.nextLine(); // ждём Enter
-
-            // обрабатываем следующий шаг
-            sim.step();
-
-            // вывод состояния буфера
-            System.out.println(buffer);
-
-            // вывод состояния Харонов
-            System.out.print("Charons: ");
-            for (Charon c : charons) {
-                System.out.print(c.getName() + (c.isBusy() ? "[BUSY] " : "[FREE] "));
-            }
-            System.out.println();
+        // 8️⃣ Запуск выбранного режима
+        if (stepMode) {
+            runStepMode(sim, buffer, charons, deltaTime);
+        } else {
+            runAutoMode(sim, buffer, charons, deltaTime);
         }
+    }
 
-        System.out.println("\n=== SIMULATION END ===");
+    private static void runStepMode(Simulation sim, Buffer buffer, List<Charon> charons, double deltaTime) {
+        Scanner scanner = new Scanner(System.in);
+        int step = 0;
+        System.out.println("=== START STEP MODE ===");
+        while (!sim.isFinished()) {
+            System.out.println("\nPress Enter to process next time unit...");
+            scanner.nextLine();
+
+            step++;
+            List<Event> events = sim.tick(deltaTime);
+
+            System.out.println("=== Step " + step + " | t=" + sim.getCurrentTime() + " ===");
+            if (events.isEmpty()) {
+                System.out.println("(no events)");
+            } else {
+                for (Event e : events) {
+                    System.out.println(e.describe());
+                }
+            }
+
+            System.out.println(buffer);
+            printCharons(charons);
+        }
+        System.out.println("\n=== STEP SIMULATION END ===");
+    }
+
+    private static void runAutoMode(Simulation sim, Buffer buffer, List<Charon> charons, double deltaTime) {
+        int step = 0;
+        System.out.println("=== START AUTO MODE ===");
+        while (!sim.isFinished()) {
+            step++;
+            List<Event> events = sim.tick(deltaTime);
+
+            // можно собирать статистику для таблицы (например, количество доставленных, отказанных душ)
+            // здесь просто печатаем кратко:
+            System.out.println("Step " + step + " | t=" + sim.getCurrentTime() + " | Events: " + events.size());
+        }
+        System.out.println("\n=== AUTO SIMULATION END ===");
+        System.out.println(buffer);
+        printCharons(charons);
+    }
+
+    private static void printCharons(List<Charon> charons) {
+        System.out.print("Charons: ");
+        for (Charon c : charons) {
+            System.out.print(c.getName() + (c.isBusy() ? "[BUSY] " : "[FREE] "));
+        }
+        System.out.println("\n");
     }
 }
