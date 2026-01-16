@@ -38,7 +38,7 @@ public class Source {
     private Soul generateSoul(double currentTime) {
         innerCounter++;
         String soulId = sourceId + "-" + innerCounter;
-        return new Soul(soulId, sourceId, currentTime);
+        return new Soul(sourceId, currentTime);
     }
 
     /**

@@ -4,20 +4,21 @@ import main.utils.SoulStatus;
 
 public class Soul {
 
-    private final String id;
+    private final long id;
     private final int sourceId;
     private final double arrivalTime;
     private SoulStatus state;
 
-    public Soul(String id, int sourceId, double arrivalTime) {
-        this.id = id;
+    private static long GLOBAL_ID = 0;
+
+    public Soul(int sourceId, double arrivalTime) {
+        this.id = ++GLOBAL_ID;
         this.sourceId = sourceId;
         this.arrivalTime = arrivalTime;
-        this.state = SoulStatus.NEW;
     }
 
     public String getId() {
-        return id;
+        return sourceId + id + "";
     }
 
     public int getSourceId() {
