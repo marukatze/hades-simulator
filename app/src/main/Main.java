@@ -2,7 +2,9 @@ package main;
 
 import main.model.*;
 import main.simulation.*;
+import main.utils.EventLogger;
 
+import javax.swing.border.EmptyBorder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -10,94 +12,107 @@ import java.util.Scanner;
 public class Main {
 
     public static void main(String[] args) {
+        boolean stepMode = true;
 
-        boolean stepMode = true; // true = пошаговый режим, false = авто
-        double deltaTime = 1.0;  // единица времени за шаг
-        double mu = 1.15; // placeholder
-
-        // 1️⃣ Создаём календарь
+        // 1️⃣ Календарь событий
         EventCalendar calendar = new EventCalendar();
 
-        // 2️⃣ Создаём буфер и Цербера
-        Buffer buffer = new Buffer(5);
+        // 2️⃣ Буфер на 4 места (Д2Б4) и Цербер
+        Buffer buffer = new Buffer(4);
         Cerberus cerberus = new Cerberus(buffer);
 
-        // 3️⃣ Создаём Харонов
+        // 3️⃣ Хароны с правильной интенсивностью
+        double mu = 1.5;  // среднее время обслуживания = 0.4 сек
         List<Charon> charons = new ArrayList<>();
         charons.add(new Charon("Charon-1", mu));
         charons.add(new Charon("Charon-2", mu));
-        charons.add(new Charon("Charon-3", mu));  // добавляем
-        charons.add(new Charon("Charon-4", mu));  // добавляем
+        charons.add(new Charon("Charon-3", mu));
+        charons.add(new Charon("Charon-4", mu));
 
-
-
-        // 5️⃣ Создаём источники душ
+        // 4️⃣ Источники (3 штуки, равномерное распределение)
         List<Source> sources = new ArrayList<>();
-        sources.add(new Source(1, 0.2, 0.3, calendar));  // высокий приоритет, прибытие каждые 0.3-0.7
-        sources.add(new Source(2, 0.2, 0.3, calendar));  // низкий приоритет, прибытие каждые 0.5-1.0
-        sources.add(new Source(3, 0.2, 0.3, calendar));  // низкий приоритет, прибытие каждые 0.5-1.0
+        sources.add(new Source(1, 0.2, 0.3, calendar));  // приоритет 1 (высокий)
+        sources.add(new Source(2, 0.2, 0.3, calendar));  // приоритет 2
+        sources.add(new Source(3, 0.2, 0.3, calendar));  // приоритет 3 (низкий)
 
-        // 4️⃣ Создаём Аида
+        // 5️⃣ Аид с доступом ко всем компонентам
         Hades hades = new Hades(buffer, cerberus, charons, calendar, sources);
-        // 6️⃣ Создаём симуляцию
+
+        // 6️⃣ Симуляция
         Simulation sim = new Simulation(calendar, hades, sources);
 
-        // 7️⃣ Инициализация
-        sim.init();
-
-        // 8️⃣ Запуск выбранного режима
+        // 7️⃣ Запуск
         if (stepMode) {
             runStepMode(sim, buffer, charons);
         } else {
-            runAutoMode(sim, buffer, charons, deltaTime);
+            runAutoMode(sim, buffer, charons, 1000.0);
         }
     }
 
+    /**
+     * ПОШАГОВЫЙ РЕЖИМ - обрабатываем по одному событию
+     */
     private static void runStepMode(Simulation sim, Buffer buffer, List<Charon> charons) {
         Scanner scanner = new Scanner(System.in);
-        int step = 0;
-        System.out.println("=== START STEP MODE (EVENT-DRIVEN) ===");
+        int eventCount = 0;
+
+        System.out.println("STEP MODE");
+        System.out.println(EventLogger.SEPARATOR);
+
+        sim.init();
 
         while (!sim.isFinished()) {
-            System.out.println("\nPress Enter to process next event...");
+            System.out.println("\npress enter");
             scanner.nextLine();
 
-            step++;
-            boolean processed = sim.processNextEvent(); // обрабатываем ОДНО событие
-
-            System.out.println("=== Event " + step + " | t=" + String.format("%.3f", sim.getCurrentTime()) + " ===");
+            EventLogger.logEventHeader(eventCount, sim.getCurrentTime());
+            boolean processed = sim.processNextEvent();
             if (!processed) {
-                System.out.println("No more events!");
+                System.out.println("no more events");
                 break;
             }
 
-            System.out.println(buffer);
-            printCharons(charons);
+            eventCount++;
+
+            EventLogger.logBufferState(buffer);
+            EventLogger.logCharonsState(charons);
         }
-        System.out.println("\n=== STEP SIMULATION END ===");
+
+        System.out.println("\n🏁 СИМУЛЯЦИЯ ЗАВЕРШЕНА");
+        System.out.println("Обработано событий: " + eventCount);
     }
 
-    private static void runAutoMode(Simulation sim, Buffer buffer, List<Charon> charons, double deltaTime) {
-        int step = 0;
-        System.out.println("=== START AUTO MODE ===");
-        while (!sim.isFinished()) {
-            step++;
-            List<Event> events = sim.tick(deltaTime);
+    /**
+     * АВТОМАТИЧЕСКИЙ РЕЖИМ - симуляция до заданного времени
+     */
+    private static void runAutoMode(Simulation sim, Buffer buffer, List<Charon> charons, double maxTime) {
+        sim.init();
 
-            // можно собирать статистику для таблицы (например, количество доставленных, отказанных душ)
-            // здесь просто печатаем кратко:
-            System.out.println("Step " + step + " | t=" + sim.getCurrentTime() + " | Events: " + events.size());
-        }
-        System.out.println("\n=== AUTO SIMULATION END ===");
-        System.out.println(buffer);
-        printCharons(charons);
-    }
+        System.out.println("🚀 ЗАПУСК АВТОМАТИЧЕСКОЙ СИМУЛЯЦИИ");
+        System.out.println("⏱️  Максимальное время: " + maxTime + " сек");
+        System.out.println(EventLogger.SEPARATOR);
 
-    private static void printCharons(List<Charon> charons) {
-        System.out.print("Charons: ");
-        for (Charon c : charons) {
-            System.out.print(c.getName() + (c.isBusy() ? "[BUSY] " : "[FREE] "));
+        int eventCount = 0;
+        while (!sim.isFinished() && sim.getCurrentTime() < maxTime) {
+            boolean processed = sim.processNextEvent();
+            if (!processed) break;
+            eventCount++;
+
+            // Каждые 50 событий показываем состояние
+            if (eventCount % 50 == 0) {
+                System.out.printf("📈 Прогресс: t=%.3f, событий: %d, буфер: %d/%d%n",
+                        sim.getCurrentTime(), eventCount,
+                        buffer.getCurrentSize(), buffer.getCapacity());
+            }
         }
-        System.out.println("\n");
+
+        System.out.println("\n🏁 СИМУЛЯЦИЯ ЗАВЕРШЕНА");
+        System.out.println("⏱️  Время: " + String.format("%.3f", sim.getCurrentTime()) + " сек");
+        System.out.println("📊 Всего событий: " + eventCount);
+
+        // Финальное состояние
+        System.out.println("\n📊 ФИНАЛЬНОЕ СОСТОЯНИЕ:");
+        EventLogger.logBufferState(buffer);
+        EventLogger.logCharonsState(charons);
     }
 }

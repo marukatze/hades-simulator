@@ -3,6 +3,7 @@ package main.model;
 import main.simulation.Event;
 import main.simulation.EventCalendar;
 import main.simulation.EventType;
+import main.utils.EventLogger;
 
 import java.util.Random;
 
@@ -74,8 +75,23 @@ public class Source {
     /**
      * Планирует СЛЕДУЮЩУЮ душу (вызывается после прибытия текущей)
      */
-    public void scheduleNextSoul(double currentTime) {
-        generateSoul(currentTime);
+    public double scheduleNextSoul(double currentTime) {
+        double interval = arrivalMin + (arrivalMax - arrivalMin) * random.nextDouble();
+        double arrivalTime = currentTime + interval;
+
+        generatedCount++;
+        String soulId = sourceId + "-" + generatedCount;
+        Soul soul = new Soul(soulId, sourceId, arrivalTime);
+
+        Event arrivalEvent = new Event(
+                arrivalTime,
+                EventType.SOUL_ARRIVED,
+                soul
+        );
+
+        calendar.add(arrivalEvent);
+
+        return arrivalTime;
     }
 
     /**

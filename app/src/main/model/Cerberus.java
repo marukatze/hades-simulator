@@ -1,5 +1,6 @@
 package main.model;
 
+import main.utils.EventLogger;
 import main.utils.SoulStatus;
 
 public class Cerberus {
@@ -11,43 +12,53 @@ public class Cerberus {
         this.buffer = buffer;
     }
 
+    /**
+     * Д1ОЗ1 - заполнение буфера ПО КОЛЬЦУ
+     * Д1ОО4 - если буфер полон, вытесняем ПОСЛЕДНЮЮ ПОСТУПИВШУЮ
+     */
     public void handleArrival(Soul soul, double currentTime) {
-        System.out.println("🐶 Cerberus: processing soul " + soul.getId() +
-                " at t=" + String.format("%.3f", currentTime));
+        // Логируем прибытие (это уже делает Hades, но оставим для контекста)
+        EventLogger.logSoulArrival(soul, currentTime);
 
-        // ✅ 1. ПЫТАЕМСЯ НАЙТИ СВОБОДНОЕ МЕСТО
+        // Пытаемся найти свободное место по кольцу
         int insertIndex = findFreeSlot();
 
         if (insertIndex != -1) {
-            // ✅ ЕСТЬ СВОБОДНОЕ МЕСТО - вставляем
+            // ✅ ЕСТЬ СВОБОДНОЕ МЕСТО - вставляем (Д1ОЗ1)
             buffer.setAt(insertIndex, soul);
             lastInsertIndex = insertIndex;
             soul.setStatus(SoulStatus.IN_BUFFER);
             soul.setBufferEntryTime(currentTime);
-            System.out.println("🐶 Cerberus: soul " + soul.getId() +
-                    " inserted at buffer[" + insertIndex + "]");
+
+            // Логируем вставку
+            EventLogger.logCerberusInsert(soul, insertIndex);
+
         } else {
-            // ✅ НЕТ СВОБОДНОГО МЕСТА - вытесняем последнюю
+            // ❌ НЕТ СВОБОДНОГО МЕСТА - вытесняем последнюю поступившую (Д1ОО4)
             Soul rejected = buffer.getAt(lastInsertIndex);
 
+            // Помечаем вытесненную душу как отказанную
             rejected.setStatus(SoulStatus.REJECTED);
             rejected.setRejectionTime(currentTime);
 
+            // Вставляем новую душу на место вытесненной
             buffer.setAt(lastInsertIndex, soul);
             soul.setStatus(SoulStatus.IN_BUFFER);
             soul.setBufferEntryTime(currentTime);
 
-            System.out.println("🐶 Cerberus: buffer FULL, rejected " + rejected.getId() +
-                    ", inserted " + soul.getId() + " at buffer[" + lastInsertIndex + "]");
+            // Логируем вытеснение
+            EventLogger.logCerberusReject(rejected, soul, lastInsertIndex, currentTime);
         }
     }
 
     /**
-     * Ищет свободное место ПО КОЛЬЦУ
+     * Ищет свободное место ПО КОЛЬЦУ, начиная с lastInsertIndex + 1
      * @return индекс свободного места или -1, если мест нет
      */
     private int findFreeSlot() {
         int capacity = buffer.getCapacity();
+        if (capacity == 0) return -1;
+
         int start = (lastInsertIndex + 1) % capacity;
 
         for (int i = 0; i < capacity; i++) {
@@ -59,11 +70,13 @@ public class Cerberus {
         return -1;  // НЕТ СВОБОДНЫХ МЕСТ
     }
 
-    // Удалить findNextFreeSlot() или оставить для совместимости
+    /**
+     * Для обратной совместимости - использует findFreeSlot()
+     */
     private int findNextFreeSlot() {
         int index = findFreeSlot();
         if (index == -1) {
-            throw new IllegalStateException("No free slot but hasSpace() = true");
+            throw new IllegalStateException("No free slot but should have space!");
         }
         return index;
     }

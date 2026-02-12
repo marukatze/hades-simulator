@@ -7,9 +7,10 @@ import main.utils.SoulStatus;
 public class Charon {
 
     private final String name;
-    private final double mu;
+    private final double mu;  // интенсивность обслуживания
     private boolean busy = false;
-    private Soul currentSoul = null;  // ВАЖНО: запоминаем, кого перевозим
+    private Soul currentSoul = null;
+    private double finishTime = 0.0;  // время окончания обслуживания
 
     public Charon(String name, double mu) {
         this.name = name;
@@ -24,6 +25,15 @@ public class Charon {
         return currentSoul;
     }
 
+    // ✅ ГЕТТЕР ДЛЯ μ (нужен для логирования)
+    public double getMu() {
+        return mu;
+    }
+
+    public double getFinishTime() {
+        return finishTime;
+    }
+
     public Event transport(Soul soul, double currentTime) {
         busy = true;
         currentSoul = soul;
@@ -32,14 +42,10 @@ public class Charon {
         double u = Math.random();
         double serviceTime = -Math.log(1 - u) / mu;
         soul.setServiceTime(serviceTime);
+        soul.setServiceStartTime(currentTime);
+        soul.setServiceEndTime(currentTime + serviceTime);
 
-        double finishTime = currentTime + serviceTime;
-
-        // 🔍 ОТЛАДКА
-        System.out.println("⏱️ " + name + " started transport of soul " + soul.getId() +
-                " at t=" + String.format("%.3f", currentTime) +
-                ", service time=" + String.format("%.3f", serviceTime) +
-                ", finish at t=" + String.format("%.3f", finishTime));
+        finishTime = currentTime + serviceTime;
 
         return new Event(
                 finishTime,
@@ -51,6 +57,7 @@ public class Charon {
     public void finish() {
         busy = false;
         currentSoul = null;
+        finishTime = 0.0;
     }
 
     public String getName() {

@@ -3,6 +3,7 @@ package main.model;
 import main.simulation.Event;
 import main.simulation.EventCalendar;
 import main.simulation.EventType;
+import main.utils.EventLogger;
 import main.utils.SoulStatus;
 
 import java.util.List;
@@ -38,58 +39,52 @@ public class Hades {
 
             case SOUL_ARRIVED -> {
                 Soul soul = event.getSoul();
+
                 cerberus.handleArrival(soul, currentTime);
 
                 Source source = findSourceById(soul.getSourceId());
                 if (source != null) {
-                    source.scheduleNextSoul(currentTime);
+                    double nextArrival = source.scheduleNextSoul(currentTime);
                 }
 
-                // ✅ Добавляем микроскопический сдвиг (1 наносекунда)
                 double epsilon = 0.000001;
                 calendar.add(new Event(
-                        currentTime + epsilon,  // 👈 Чуть-чуть позже!
+                        currentTime + epsilon,
                         EventType.HADES_DECISION,
                         null
                 ));
             }
 
             case HADES_DECISION -> {
-                if (hasFreeCharon() && buffer.getCurrentSize() > 0) {
+                if (buffer.getCurrentSize() == 0) break;
+
+                if (hasFreeCharon()) {
                     Soul soul = chooseSoulFromBuffer(currentTime);
                     Charon charon = chooseCharon();
 
                     if (soul != null && charon != null) {
+                        EventLogger.logHadesDecision(soul, charon);
+
                         soul.setStatus(SoulStatus.SENT_TO_CHARON);
                         soul.setServiceStartTime(currentTime);
 
-                        System.out.println(
-                                "👑 Hades sends soul " + soul.getId() +
-                                        " to " + charon.getName() +
-                                        " at t=" + String.format("%.3f", currentTime)
-                        );
+                        EventLogger.logCharonStart(charon, soul, currentTime, charon.getFinishTime());
 
                         Event finish = charon.transport(soul, currentTime);
                         calendar.add(finish);
                     }
                 }
             }
+
             case CHARON_FINISHED -> {
                 Soul soul = event.getSoul();
-                soul.setStatus(SoulStatus.DONE);
-                soul.setServiceEndTime(currentTime);
-
                 Charon finishedCharon = findCharonBySoul(soul);
+
                 if (finishedCharon != null) {
                     finishedCharon.finish();
-                    System.out.println(
-                            "🏁 " + finishedCharon.getName() +
-                                    " delivered soul " + soul.getId() +
-                                    " at t=" + String.format("%.3f", currentTime)
-                    );
+                    EventLogger.logCharonFinish(finishedCharon, soul, currentTime);
                 }
 
-                // ✅ Тоже добавляем сдвиг
                 double epsilon = 0.000001;
                 calendar.add(new Event(
                         currentTime + epsilon,
@@ -101,7 +96,6 @@ public class Hades {
         }
     }
 
-    // ✅ Метод для поиска источника по ID
     private Source findSourceById(int sourceId) {
         for (Source s : sources) {
             if (s.getSourceId() == sourceId) {
@@ -111,11 +105,6 @@ public class Hades {
         return null;
     }
 
-    /**
-     * Д2Б4 - выбор заявки из буфера по приоритету:
-     * 1️⃣ Меньший sourceId = выше приоритет
-     * 2️⃣ Среди одинакового приоритета - ПОСЛЕДНЯЯ поступившая в буфер
-     */
     private Soul chooseSoulFromBuffer(double currentTime) {
         Soul best = null;
         int bestIndex = -1;

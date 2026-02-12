@@ -95,4 +95,22 @@ public class Soul {
     public void setRejectionTime(double rejectionTime) {
         this.rejectionTime = rejectionTime;
     }
+
+    // В класс Soul.java добавить:
+    public double getTimeInQueue() {
+        if (serviceStartTime > 0 && bufferEntryTime > 0) {
+            return serviceStartTime - bufferEntryTime;
+        }
+        return 0.0;
+    }
+
+    public double getTimeInSystem() {
+        if (status == SoulStatus.DONE && serviceEndTime > 0) {
+            return serviceEndTime - arrivalTime;
+        }
+        if (status == SoulStatus.REJECTED && rejectionTime > 0) {
+            return rejectionTime - arrivalTime;
+        }
+        return 0.0;
+    }
 }

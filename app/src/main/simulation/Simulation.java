@@ -1,7 +1,7 @@
 package main.simulation;
 
 import main.model.*;
-import java.util.ArrayList;
+
 import java.util.List;
 
 public class Simulation {
@@ -18,54 +18,73 @@ public class Simulation {
         this.sources = sources;
     }
 
+    /**
+     * Инициализация симуляции:
+     * - Запускаем генерацию от всех источников
+     * - Создаём первое решение Аида
+     */
     public void init() {
         if (!initialized) {
-            // Запускаем бесконечную генерацию источников
             for (Source s : sources) {
-                s.startGenerating(currentTime);  // ✅ generateSoul() вызывается внутри startGenerating()
+                s.startGenerating(currentTime);
             }
-            // Первое решение Аида
             calendar.add(new Event(currentTime, EventType.HADES_DECISION, null));
             initialized = true;
         }
     }
 
-    // ВАЖНО: теперь обрабатываем ТОЛЬКО ОДНО ближайшее событие
-    public List<Event> tick(double deltaTime) {
-        double targetTime = currentTime + deltaTime;
-        List<Event> stepEvents = new ArrayList<>();
-
-        // Обрабатываем ВСЕ события, время которых <= targetTime
-        while (!calendar.isEmpty() && calendar.peek().getTime() <= targetTime) {
-            Event e = calendar.next();
-            currentTime = e.getTime();  // двигаем время точно к моменту события!
-            hades.handle(e, currentTime);  // ✅ передаём currentTime вторым аргументом
-            stepEvents.add(e);
-        }
-
-        // Если событий больше нет, но время еще не достигло targetTime
-        if (currentTime < targetTime) {
-            currentTime = targetTime;  // просто двигаем время вперед
-        }
-
-        return stepEvents;
-    }
-
-    // И для processNextEvent() тоже исправить:
+    /**
+     * ОСНОВНОЙ МЕТОД: обрабатывает ОДНО ближайшее событие.
+     * Используй ЭТОТ метод для пошагового режима!
+     */
     public boolean processNextEvent() {
         if (calendar.isEmpty()) return false;
 
         Event e = calendar.next();
         currentTime = e.getTime();
-        hades.handle(e, currentTime);  // ✅ передаём currentTime
+        hades.handle(e, currentTime);
         return true;
     }
 
+    /**
+     * Альтернативный метод для симуляции с фиксированным шагом по времени.
+     * Может обработать несколько событий за один шаг.
+     */
+    public List<Event> tick(double deltaTime) {
+        double targetTime = currentTime + deltaTime;
+        List<Event> stepEvents = new java.util.ArrayList<>();
 
+        while (!calendar.isEmpty() && calendar.peek().getTime() <= targetTime) {
+            Event e = calendar.next();
+            currentTime = e.getTime();
+            hades.handle(e, currentTime);
+            stepEvents.add(e);
+        }
+
+        if (currentTime < targetTime) {
+            currentTime = targetTime;
+        }
+
+        return stepEvents;
+    }
+
+    /**
+     * Возвращает следующее событие без его обработки (для логирования)
+     */
+    public Event getNextEvent() {
+        return calendar.peek();
+    }
+
+    /**
+     * Текущее время симуляции
+     */
     public double getCurrentTime() {
         return currentTime;
     }
 
+    /**
+     * Проверка, завершена ли симуляция
+     */
     public boolean isFinished() {
         return calendar.isEmpty() && hades.isIdle();
     }
