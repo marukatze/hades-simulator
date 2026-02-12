@@ -11,10 +11,6 @@ public class Cerberus {
         this.buffer = buffer;
     }
 
-    /**
-     * Д1ОЗ1 - заполнение буфера ПО КОЛЬЦУ
-     * Д1ОО4 - если буфер полон, вытесняем ПОСЛЕДНЮЮ ПОСТУПИВШУЮ
-     */
     public void handleArrival(Soul soul, double currentTime) {
         System.out.println("🐶 Cerberus: processing soul " + soul.getId() +
                 " at t=" + String.format("%.3f", currentTime));

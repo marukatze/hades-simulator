@@ -13,7 +13,7 @@ public class Main {
 
         boolean stepMode = true; // true = пошаговый режим, false = авто
         double deltaTime = 1.0;  // единица времени за шаг
-        double mu = 0.15; // placeholder
+        double mu = 1.15; // placeholder
 
         // 1️⃣ Создаём календарь
         EventCalendar calendar = new EventCalendar();

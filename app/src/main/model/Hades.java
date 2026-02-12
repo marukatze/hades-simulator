@@ -40,14 +40,15 @@ public class Hades {
                 Soul soul = event.getSoul();
                 cerberus.handleArrival(soul, currentTime);
 
-                // ✅ КЛЮЧЕВОЕ: планируем СЛЕДУЮЩУЮ душу от этого источника
                 Source source = findSourceById(soul.getSourceId());
                 if (source != null) {
                     source.scheduleNextSoul(currentTime);
                 }
 
+                // ✅ Добавляем микроскопический сдвиг (1 наносекунда)
+                double epsilon = 0.000001;
                 calendar.add(new Event(
-                        currentTime,
+                        currentTime + epsilon,  // 👈 Чуть-чуть позже!
                         EventType.HADES_DECISION,
                         null
                 ));
@@ -73,14 +74,8 @@ public class Hades {
                     }
                 }
             }
-
             case CHARON_FINISHED -> {
                 Soul soul = event.getSoul();
-                if (soul == null) {
-                    System.err.println("❌ CHARON_FINISHED with null soul!");
-                    break;
-                }
-
                 soul.setStatus(SoulStatus.DONE);
                 soul.setServiceEndTime(currentTime);
 
@@ -92,17 +87,17 @@ public class Hades {
                                     " delivered soul " + soul.getId() +
                                     " at t=" + String.format("%.3f", currentTime)
                     );
-                } else {
-                    System.err.println("❌ Could not find Charon for soul " + soul.getId());
                 }
 
-                // Планируем решение Аида
+                // ✅ Тоже добавляем сдвиг
+                double epsilon = 0.000001;
                 calendar.add(new Event(
-                        currentTime,
+                        currentTime + epsilon,
                         EventType.HADES_DECISION,
                         null
                 ));
             }
+
         }
     }
 
