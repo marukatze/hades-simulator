@@ -5,48 +5,74 @@ import main.utils.SoulStatus;
 public class Cerberus {
 
     private final Buffer buffer;
-    private int lastIndex = -1;
+    private int lastInsertIndex = -1;  // указатель для кольца
 
     public Cerberus(Buffer buffer) {
         this.buffer = buffer;
     }
 
-    public void handleArrival(Soul soul) {
-        System.out.println("🐶 Cerberus: processing soul " + soul.getId());
+    /**
+     * Д1ОЗ1 - заполнение буфера ПО КОЛЬЦУ
+     * Д1ОО4 - если буфер полон, вытесняем ПОСЛЕДНЮЮ ПОСТУПИВШУЮ
+     */
+    public void handleArrival(Soul soul, double currentTime) {
+        System.out.println("🐶 Cerberus: processing soul " + soul.getId() +
+                " at t=" + String.format("%.3f", currentTime));
 
-        if (buffer.hasSpace()) {
-            int insertIndex = (lastIndex + 1) % buffer.getCapacity();
+        // ✅ 1. ПЫТАЕМСЯ НАЙТИ СВОБОДНОЕ МЕСТО
+        int insertIndex = findFreeSlot();
 
-            while (buffer.getAt(insertIndex) != null) {
-                insertIndex = (insertIndex + 1) % buffer.getCapacity();
-            }
-
+        if (insertIndex != -1) {
+            // ✅ ЕСТЬ СВОБОДНОЕ МЕСТО - вставляем
             buffer.setAt(insertIndex, soul);
-            lastIndex = insertIndex;
+            lastInsertIndex = insertIndex;
             soul.setStatus(SoulStatus.IN_BUFFER);
-
-            System.out.println(
-                    "🐶 Cerberus: soul " + soul.getId() +
-                            " inserted at buffer[" + insertIndex + "]"
-            );
-
+            soul.setBufferEntryTime(currentTime);
+            System.out.println("🐶 Cerberus: soul " + soul.getId() +
+                    " inserted at buffer[" + insertIndex + "]");
         } else {
-            // Д1ОО4 — вытесняем последнюю вставленную
-            Soul rejected = buffer.getAt(lastIndex);
+            // ✅ НЕТ СВОБОДНОГО МЕСТА - вытесняем последнюю
+            Soul rejected = buffer.getAt(lastInsertIndex);
+
             rejected.setStatus(SoulStatus.REJECTED);
+            rejected.setRejectionTime(currentTime);
 
-            buffer.setAt(lastIndex, soul);
+            buffer.setAt(lastInsertIndex, soul);
             soul.setStatus(SoulStatus.IN_BUFFER);
+            soul.setBufferEntryTime(currentTime);
 
-            System.out.println(
-                    "🐶 Cerberus: buffer full, rejected " + rejected.getId() +
-                            ", inserted " + soul.getId() +
-                            " at buffer[" + lastIndex + "]"
-            );
+            System.out.println("🐶 Cerberus: buffer FULL, rejected " + rejected.getId() +
+                    ", inserted " + soul.getId() + " at buffer[" + lastInsertIndex + "]");
         }
     }
 
-    public void printBufferState() {
-        System.out.println(buffer);
+    /**
+     * Ищет свободное место ПО КОЛЬЦУ
+     * @return индекс свободного места или -1, если мест нет
+     */
+    private int findFreeSlot() {
+        int capacity = buffer.getCapacity();
+        int start = (lastInsertIndex + 1) % capacity;
+
+        for (int i = 0; i < capacity; i++) {
+            int index = (start + i) % capacity;
+            if (buffer.getAt(index) == null) {
+                return index;
+            }
+        }
+        return -1;  // НЕТ СВОБОДНЫХ МЕСТ
+    }
+
+    // Удалить findNextFreeSlot() или оставить для совместимости
+    private int findNextFreeSlot() {
+        int index = findFreeSlot();
+        if (index == -1) {
+            throw new IllegalStateException("No free slot but hasSpace() = true");
+        }
+        return index;
+    }
+
+    public int getLastInsertIndex() {
+        return lastInsertIndex;
     }
 }

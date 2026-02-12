@@ -1,7 +1,7 @@
 package main.utils;
 
 public enum SoulStatus {
-    NEW,
+    CREATED,
     IN_BUFFER,
     SENT_TO_CHARON,
     TRANSPORTING,

@@ -13,7 +13,7 @@ public class Main {
 
         boolean stepMode = true; // true = пошаговый режим, false = авто
         double deltaTime = 1.0;  // единица времени за шаг
-        double mu = 15; // placeholder
+        double mu = 0.15; // placeholder
 
         // 1️⃣ Создаём календарь
         EventCalendar calendar = new EventCalendar();
@@ -26,15 +26,19 @@ public class Main {
         List<Charon> charons = new ArrayList<>();
         charons.add(new Charon("Charon-1", mu));
         charons.add(new Charon("Charon-2", mu));
+        charons.add(new Charon("Charon-3", mu));  // добавляем
+        charons.add(new Charon("Charon-4", mu));  // добавляем
 
-        // 4️⃣ Создаём Аида
-        Hades hades = new Hades(buffer, cerberus, charons, calendar);
+
 
         // 5️⃣ Создаём источники душ
         List<Source> sources = new ArrayList<>();
-        sources.add(new Source(1, 1.0, 3.0, calendar));
-        sources.add(new Source(2, 2.0, 4.0, calendar));
+        sources.add(new Source(1, 0.2, 0.3, calendar));  // высокий приоритет, прибытие каждые 0.3-0.7
+        sources.add(new Source(2, 0.2, 0.3, calendar));  // низкий приоритет, прибытие каждые 0.5-1.0
+        sources.add(new Source(3, 0.2, 0.3, calendar));  // низкий приоритет, прибытие каждые 0.5-1.0
 
+        // 4️⃣ Создаём Аида
+        Hades hades = new Hades(buffer, cerberus, charons, calendar, sources);
         // 6️⃣ Создаём симуляцию
         Simulation sim = new Simulation(calendar, hades, sources);
 
@@ -43,30 +47,28 @@ public class Main {
 
         // 8️⃣ Запуск выбранного режима
         if (stepMode) {
-            runStepMode(sim, buffer, charons, deltaTime);
+            runStepMode(sim, buffer, charons);
         } else {
             runAutoMode(sim, buffer, charons, deltaTime);
         }
     }
 
-    private static void runStepMode(Simulation sim, Buffer buffer, List<Charon> charons, double deltaTime) {
+    private static void runStepMode(Simulation sim, Buffer buffer, List<Charon> charons) {
         Scanner scanner = new Scanner(System.in);
         int step = 0;
-        System.out.println("=== START STEP MODE ===");
+        System.out.println("=== START STEP MODE (EVENT-DRIVEN) ===");
+
         while (!sim.isFinished()) {
-            System.out.println("\nPress Enter to process next time unit...");
+            System.out.println("\nPress Enter to process next event...");
             scanner.nextLine();
 
             step++;
-            List<Event> events = sim.tick(deltaTime);
+            boolean processed = sim.processNextEvent(); // обрабатываем ОДНО событие
 
-            System.out.println("=== Step " + step + " | t=" + sim.getCurrentTime() + " ===");
-            if (events.isEmpty()) {
-                System.out.println("(no events)");
-            } else {
-                for (Event e : events) {
-                    System.out.println(e.describe());
-                }
+            System.out.println("=== Event " + step + " | t=" + String.format("%.3f", sim.getCurrentTime()) + " ===");
+            if (!processed) {
+                System.out.println("No more events!");
+                break;
             }
 
             System.out.println(buffer);

@@ -4,21 +4,30 @@ import main.utils.SoulStatus;
 
 public class Soul {
 
-    private final long id;
+    private final String id;
     private final int sourceId;
     private final double arrivalTime;
-    private SoulStatus state;
+    private double serviceStartTime = 0.0;
+    private double serviceEndTime = 0.0;
+    private double serviceTime = 0.0;
+    private SoulStatus status;
+    private double bufferEntryTime;    // время входа в буфер (для выбора последней)
+    private double rejectionTime;      // время отказа (для статистики)
 
-    private static long GLOBAL_ID = 0;
-
-    public Soul(int sourceId, double arrivalTime) {
-        this.id = ++GLOBAL_ID;
+    public Soul(String id, int sourceId, double arrivalTime) {
+        this.id = id;
         this.sourceId = sourceId;
         this.arrivalTime = arrivalTime;
+        this.status = SoulStatus.CREATED;
+    }
+
+    // Перегруженный конструктор для обратной совместимости
+    public Soul(int sourceId, double arrivalTime) {
+        this(sourceId + "-0", sourceId, arrivalTime);
     }
 
     public String getId() {
-        return sourceId + id + "";
+        return id;
     }
 
     public int getSourceId() {
@@ -29,11 +38,61 @@ public class Soul {
         return arrivalTime;
     }
 
-    public SoulStatus getStatus() {
-        return state;
+    public double getServiceStartTime() {
+        return serviceStartTime;
     }
 
-    public void setStatus(SoulStatus state) {
-        this.state = state;
+    public void setServiceStartTime(double serviceStartTime) {
+        this.serviceStartTime = serviceStartTime;
+    }
+
+    public double getServiceEndTime() {
+        return serviceEndTime;
+    }
+
+    public void setServiceEndTime(double serviceEndTime) {
+        this.serviceEndTime = serviceEndTime;
+    }
+
+    public double getServiceTime() {
+        return serviceTime;
+    }
+
+    public void setServiceTime(double serviceTime) {
+        this.serviceTime = serviceTime;
+    }
+
+    public SoulStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(SoulStatus status) {
+        this.status = status;
+    }
+
+    @Override
+    public String toString() {
+        return "Soul{" +
+                "id='" + id + '\'' +
+                ", sourceId=" + sourceId +
+                ", arrivalTime=" + arrivalTime +
+                ", status=" + status +
+                '}';
+    }
+
+    public double getBufferEntryTime() {
+        return bufferEntryTime;
+    }
+
+    public void setBufferEntryTime(double bufferEntryTime) {
+        this.bufferEntryTime = bufferEntryTime;
+    }
+
+    public double getRejectionTime() {
+        return rejectionTime;
+    }
+
+    public void setRejectionTime(double rejectionTime) {
+        this.rejectionTime = rejectionTime;
     }
 }

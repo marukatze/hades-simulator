@@ -1,9 +1,7 @@
 package main.simulation;
 
 import main.model.*;
-
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class Simulation {
@@ -20,42 +18,55 @@ public class Simulation {
         this.sources = sources;
     }
 
-    // инициализация стартовых событий
     public void init() {
         if (!initialized) {
+            // Запускаем бесконечную генерацию источников
             for (Source s : sources) {
-                s.scheduleNextArrival(currentTime);
+                s.startGenerating(currentTime);  // ✅ generateSoul() вызывается внутри startGenerating()
             }
-            // первый ход Hades
+            // Первое решение Аида
             calendar.add(new Event(currentTime, EventType.HADES_DECISION, null));
             initialized = true;
         }
     }
 
-    // возвращает все события за один шаг времени (currentTime -> currentTime + deltaTime)
+    // ВАЖНО: теперь обрабатываем ТОЛЬКО ОДНО ближайшее событие
     public List<Event> tick(double deltaTime) {
-        currentTime += deltaTime;
+        double targetTime = currentTime + deltaTime;
         List<Event> stepEvents = new ArrayList<>();
 
-        Iterator<Event> iter = calendar.getEvents().iterator();
-        while (iter.hasNext()) {
-            Event e = iter.next();
-            if (e.getTime() <= currentTime) {
-                hades.handle(e);          // обработка события
-                stepEvents.add(e);        // добавляем для отчета
-                iter.remove();            // удаляем из календаря
-            }
+        // Обрабатываем ВСЕ события, время которых <= targetTime
+        while (!calendar.isEmpty() && calendar.peek().getTime() <= targetTime) {
+            Event e = calendar.next();
+            currentTime = e.getTime();  // двигаем время точно к моменту события!
+            hades.handle(e, currentTime);  // ✅ передаём currentTime вторым аргументом
+            stepEvents.add(e);
+        }
+
+        // Если событий больше нет, но время еще не достигло targetTime
+        if (currentTime < targetTime) {
+            currentTime = targetTime;  // просто двигаем время вперед
         }
 
         return stepEvents;
     }
+
+    // И для processNextEvent() тоже исправить:
+    public boolean processNextEvent() {
+        if (calendar.isEmpty()) return false;
+
+        Event e = calendar.next();
+        currentTime = e.getTime();
+        hades.handle(e, currentTime);  // ✅ передаём currentTime
+        return true;
+    }
+
 
     public double getCurrentTime() {
         return currentTime;
     }
 
     public boolean isFinished() {
-        // Симуляция закончена, когда календарь пуст и буфер пуст, а Хароны свободны
         return calendar.isEmpty() && hades.isIdle();
     }
 }

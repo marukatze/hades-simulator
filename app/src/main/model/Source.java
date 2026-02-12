@@ -8,8 +8,9 @@ import java.util.Random;
 
 public class Source {
 
-    private final int sourceId;
-    private int innerCounter = 0;
+    private final int sourceId;           // номер источника = приоритет (1 - highest)
+    private int generatedCount = 0;       // счетчик сгенерированных душ
+    private int rejectedCount = 0;        // счетчик отказов
 
     private final double arrivalMin;
     private final double arrivalMax;
@@ -32,34 +33,55 @@ public class Source {
         return sourceId;
     }
 
-    /**
-     * Создаёт новую душу с ID вида sourceId-innerId
-     */
-    private Soul generateSoul(double currentTime) {
-        innerCounter++;
-        String soulId = sourceId + "-" + innerCounter;
-        return new Soul(sourceId, currentTime);
+    public int getGeneratedCount() {
+        return generatedCount;
+    }
+
+    public int getRejectedCount() {
+        return rejectedCount;
+    }
+
+    public void incrementRejected() {
+        rejectedCount++;
     }
 
     /**
-     * Планирует событие прибытия души
+     * Генерирует НОВУЮ душу и планирует её прибытие
      */
-    public void scheduleNextArrival(double currentTime) {
+    public void generateSoul(double currentTime) {
+        generatedCount++;
+        String soulId = sourceId + "-" + generatedCount;
 
-        // равномерное распределение
-        double interval =
-                arrivalMin + (arrivalMax - arrivalMin) * random.nextDouble();
+        // Равномерное распределение [arrivalMin, arrivalMax]
+        double interval = arrivalMin + (arrivalMax - arrivalMin) * random.nextDouble();
+        double arrivalTime = currentTime + interval;
 
-        double eventTime = currentTime + interval;
-
-        Soul soul = generateSoul(currentTime);
+        Soul soul = new Soul(soulId, sourceId, arrivalTime);
 
         Event arrivalEvent = new Event(
-                eventTime,
+                arrivalTime,
                 EventType.SOUL_ARRIVED,
                 soul
         );
 
         calendar.add(arrivalEvent);
+
+        System.out.println("✨ Source " + sourceId + " generated soul " + soulId +
+                " at t=" + String.format("%.3f", currentTime) +
+                " (arrives at t=" + String.format("%.3f", arrivalTime) + ")");
+    }
+
+    /**
+     * Планирует СЛЕДУЮЩУЮ душу (вызывается после прибытия текущей)
+     */
+    public void scheduleNextSoul(double currentTime) {
+        generateSoul(currentTime);
+    }
+
+    /**
+     * Запускает бесконечную генерацию - планирует ПЕРВОЕ прибытие
+     */
+    public void startGenerating(double startTime) {
+        generateSoul(startTime);
     }
 }
