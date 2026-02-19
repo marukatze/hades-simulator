@@ -31,13 +31,13 @@ public class Statistics {
 
     // 2️⃣ Загрузка Харонов
     private final List<Double> charonLoadHistory = new ArrayList<>();
-    private List<Charon> charons = new ArrayList<>();
-    private int charonCount = 4;
+    private final List<Charon> charons;
+    private final int charonCount;
 
     // 3️⃣ Заполненность буфера
     private final List<Double> bufferUsageHistory = new ArrayList<>();
-    private Buffer buffer = null;
-    private int bufferCapacity = 4;
+    private final Buffer buffer;
+    private final int bufferCapacity;
 
     // ============= ДАННЫЕ ДЛЯ ОЧЕРЕДИ =============
     private final List<Double> queueLengthHistory = new ArrayList<>();
@@ -46,23 +46,16 @@ public class Statistics {
     private double lastTime = 0.0;
     private int currentQueueLength = 0;
 
-    // ============= SETTERS =============
-    public void setParams(double mu, int charonCount, int bufferCapacity) {
-        this.charonCount = charonCount;
-        this.bufferCapacity = bufferCapacity;
-    }
-
-    public void setCharons(List<Charon> charons) {
+    public Statistics(List<Charon> charons, int charonCount, Buffer buffer, int bufferCapacity) {
         this.charons = charons;
-    }
-
-    public void setBuffer(Buffer buffer) {
+        this.charonCount = charonCount;
         this.buffer = buffer;
+        this.bufferCapacity = bufferCapacity;
     }
 
     // ============= ОБНОВЛЕНИЕ МЕТРИК =============
     private void updateAllMetrics(double time) {
-        if (timePoints.isEmpty() || timePoints.get(timePoints.size() - 1) < time) {
+        if (timePoints.isEmpty() || timePoints.getLast() < time) {
             timePoints.add(time);
         }
 
@@ -90,22 +83,11 @@ public class Statistics {
 
     // ============= ГЕТТЕРЫ ДЛЯ ГРАФИКОВ =============
     public List<Double> getTimePoints() { return new ArrayList<>(timePoints); }
-    public List<Double> getRejectionRateHistory() { return new ArrayList<>(rejectionRateHistory); }
     public List<Double> getRejectionRateSource1() { return new ArrayList<>(rejectionRateSource1); }
     public List<Double> getRejectionRateSource2() { return new ArrayList<>(rejectionRateSource2); }
     public List<Double> getRejectionRateSource3() { return new ArrayList<>(rejectionRateSource3); }
     public List<Double> getCharonLoadHistory() { return new ArrayList<>(charonLoadHistory); }
     public List<Double> getBufferUsageHistory() { return new ArrayList<>(bufferUsageHistory); }
-    public List<Double> getQueueLengthHistory() { return new ArrayList<>(queueLengthHistory); }
-    public List<Double> getQueueTimeHistory() { return new ArrayList<>(queueTimeHistory); }
-
-    // ============= ГЕТТЕРЫ ДЛЯ ОТЧЕТА =============
-    public int getTotalCompleted() { return completedSouls.size(); }
-    public int getTotalGenerated() { return allSouls.size(); }
-    public int getTotalRejected() { return rejectedSouls.size(); }
-    public double getMu() { return 1.5; } // заглушка
-    public int getCharonCount() { return charonCount; }
-    public int getBufferCapacity() { return bufferCapacity; }
 
     // ============= ФИНАЛЬНЫЙ ОТЧЕТ =============
     public void printFinalReport(double totalTime) {

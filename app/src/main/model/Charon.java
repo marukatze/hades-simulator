@@ -7,14 +7,14 @@ import main.utils.SoulStatus;
 public class Charon {
 
     private final String name;
-    private final double mu;  // интенсивность обслуживания
+    private final double lambda;  // интенсивность обслуживания
     private boolean busy = false;
     private Soul currentSoul = null;
     private double finishTime = 0.0;  // время окончания обслуживания
 
-    public Charon(String name, double mu) {
+    public Charon(String name, double lambda) {
         this.name = name;
-        this.mu = mu;
+        this.lambda = lambda;
     }
 
     public boolean isBusy() {
@@ -25,22 +25,13 @@ public class Charon {
         return currentSoul;
     }
 
-    // ✅ ГЕТТЕР ДЛЯ μ (нужен для логирования)
-    public double getMu() {
-        return mu;
-    }
-
-    public double getFinishTime() {
-        return finishTime;
-    }
-
     public Event transport(Soul soul, double currentTime) {
         busy = true;
         currentSoul = soul;
         soul.setStatus(SoulStatus.TRANSPORTING);
 
         double u = Math.random();
-        double serviceTime = -Math.log(1 - u) / mu;
+        double serviceTime = -Math.log(1 - u) / lambda;
         soul.setServiceTime(serviceTime);
         soul.setServiceStartTime(currentTime);
         soul.setServiceEndTime(currentTime + serviceTime);

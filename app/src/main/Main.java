@@ -13,7 +13,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        double mu = Config.getCharonMu();
+        double lambda = Config.getCharonLambda();
         int charonCount = Config.getCharonCount();
         int bufferCapacity = Config.getBufferCapacity();
         int sourceCount = Config.getSourceCount();
@@ -27,7 +27,7 @@ public class Main {
 
         List<Charon> charons = new ArrayList<>();
         for (int i = 1; i <= charonCount; i++) {
-            charons.add(new Charon("Charon-" + i, mu));
+            charons.add(new Charon("Charon-" + i, lambda));
         }
 
         List<Source> sources = new ArrayList<>();
@@ -38,7 +38,7 @@ public class Main {
 
         Hades hades = new Hades(buffer, charons);
 
-        Statistics stats = new Statistics();
+        Statistics stats = new Statistics(charons, charonCount, buffer, bufferCapacity);
         Simulation simulation = new Simulation(
                 calendar,
                 cerberus,

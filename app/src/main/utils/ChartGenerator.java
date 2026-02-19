@@ -149,7 +149,7 @@ public class ChartGenerator {
 
         // Подзаголовок
         chart.addSubtitle(new org.jfree.chart.title.TextTitle(
-                charonCount + " Харонов, μ=" + String.format("%.2f", stats.getMu()),
+                charonCount + " Хароны",
                 new Font("Arial", Font.ITALIC, 11)));
 
         showChart(chart, "Загрузка Харонов");

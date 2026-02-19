@@ -37,8 +37,8 @@ public class Config {
         return Integer.parseInt(props.getProperty("charon.count", "4"));
     }
 
-    public static double getCharonMu() {
-        return Double.parseDouble(props.getProperty("charon.mu", "2.5"));
+    public static double getCharonLambda() {
+        return Double.parseDouble(props.getProperty("charon.lambda", "2.5"));
     }
 
     public static int getSourceCount() {
