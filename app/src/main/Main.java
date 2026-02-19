@@ -29,8 +29,8 @@ public class Main {
 
         List<Source> sources = new ArrayList<>();
         sources.add(new Source(1, 0.2, 0.3, calendar));
-        sources.add(new Source(2, 0.2, 0.3, calendar));
-        sources.add(new Source(3, 0.2, 0.3, calendar));
+        sources.add(new Source(2, 0.5, 0.6, calendar));
+        sources.add(new Source(3, 0.1, 0.4, calendar));
 
         Hades hades = new Hades(buffer, charons);
 
@@ -107,5 +107,8 @@ public class Main {
         System.out.println("\n✅ Симуляция завершена за " + timeElapsed + " мс");
         System.out.println("📊 Всего обработано событий: " + eventCount);
         sim.getStatistics().printFinalReport(timeElapsed);
+        ChartGenerator.showCharonLoadChart(sim.getStatistics(), charons.size());
+        ChartGenerator.showBufferUsageChart(sim.getStatistics(), buffer.getCapacity());
+        ChartGenerator.showRejectionRateBySourceChart(sim.getStatistics());
     }
 }
