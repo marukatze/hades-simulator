@@ -6,31 +6,35 @@ import main.utils.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        Scanner scanner = new Scanner(System.in);
-        boolean stepMode = scanner.nextLine().equalsIgnoreCase("step");
+        double mu = Config.getCharonMu();
+        int charonCount = Config.getCharonCount();
+        int bufferCapacity = Config.getBufferCapacity();
+        int sourceCount = Config.getSourceCount();
+        double maxTime = Config.getSimulationMaxTime();
+        boolean isStep = Config.getMode().equalsIgnoreCase("step");
 
         EventCalendar calendar = new EventCalendar();
 
-        Buffer buffer = new Buffer(4);
+        Buffer buffer = new Buffer(bufferCapacity);
         Cerberus cerberus = new Cerberus(buffer);
 
-        double mu = 2.5;
         List<Charon> charons = new ArrayList<>();
-        charons.add(new Charon("Charon-1", mu));
-        charons.add(new Charon("Charon-2", mu));
-        charons.add(new Charon("Charon-3", mu));
-        charons.add(new Charon("Charon-4", mu));
+        for (int i = 1; i <= charonCount; i++) {
+            charons.add(new Charon("Charon-" + i, mu));
+        }
 
         List<Source> sources = new ArrayList<>();
-        sources.add(new Source(1, 0.2, 0.3, calendar));
-        sources.add(new Source(2, 0.5, 0.6, calendar));
-        sources.add(new Source(3, 0.1, 0.4, calendar));
+        for (int i = 1; i <= sourceCount ; i++) {
+            sources.add(new Source(i, new Random().nextDouble() * 0.5,
+                    1 - new Random().nextDouble() * 0.5, calendar));
+        }
 
         Hades hades = new Hades(buffer, charons);
 
@@ -40,22 +44,22 @@ public class Main {
                 cerberus,
                 hades,
                 sources,
-                stepMode,
+                isStep,
                 stats
         );
 
         initSources(sources);
 
-        if (stepMode) {
+        if (isStep) {
             runStepMode(simulation, buffer, charons);
         } else {
-            runAutoMode(simulation, buffer, charons, 10.0);
+            runAutoMode(simulation, buffer, charons, maxTime);
         }
     }
 
     private static void initSources(List<Source> sources) {
         for (Source source : sources) {
-            Event first = source.scheduleNext(0.0);
+            source.scheduleNext(0.0);
         }
     }
 
