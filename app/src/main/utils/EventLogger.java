@@ -1,10 +1,7 @@
 package main.utils;
 
 import main.model.*;
-import main.simulation.Event;
-import main.simulation.EventType;
 
-import java.security.spec.RSAOtherPrimeInfo;
 import java.util.List;
 
 public class EventLogger {
@@ -28,19 +25,18 @@ public class EventLogger {
                 soul.getId(), index);
     }
 
-    public static void logCerberusReject(Soul rejected, Soul inserted, int index, double time) {
+    public static void logCerberusReject(Soul rejected, Soul inserted, int index) {
         System.out.printf("▶ CERBERUS: Buffer FULL! Rejected %s, inserted %s at buffer[%d]",
                 rejected.getId(), inserted.getId(), index);
     }
 
     public static void logHadesDecision(Soul soul, Charon charon) {
-        System.out.printf("▶ HADES: Soul %s sent to to %s%n",
+        System.out.printf("▶ HADES: Soul %s sent to to %s",
                 soul.getId(), charon.getName());
     }
 
-    public static void logCharonStart(Charon charon, Soul soul, double serviceTime, double finishTime) {
-        System.out.printf("▶ %-10s Started transport of Soul %s",
-                charon.getName() + ":", soul.getId());
+    public static void logHadesSleeps() {
+        System.out.printf("▶ HADES: cannot make decision, all CHARONS are BUSY");
     }
 
     public static void logCharonFinish(Charon charon, Soul soul, double time) {
@@ -83,21 +79,5 @@ public class EventLogger {
 
         }
         System.out.println(LINE);
-    }
-
-    public static void logNextEvent(Event nextEvent) {
-        System.out.println(LINE);
-        if (nextEvent != null) {
-            String desc = switch (nextEvent.getType()) {
-                case SOUL_ARRIVED -> "Soul " + nextEvent.getSoul().getId() + " arrival";
-                case CHARON_FINISHED -> "Charon finish for Soul " + nextEvent.getSoul().getId();
-                case HADES_DECISION -> "Hades decision";
-            };
-            System.out.printf("⏱️  Next event at t=%.3fs (%s)%n",
-                    nextEvent.getTime(), desc);
-        } else {
-            System.out.println("⏱️  No more events");
-        }
-        System.out.println(SEPARATOR);
     }
 }

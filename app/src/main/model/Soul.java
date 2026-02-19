@@ -13,17 +13,14 @@ public class Soul {
     private SoulStatus status;
     private double bufferEntryTime;    // время входа в буфер (для выбора последней)
     private double rejectionTime;      // время отказа (для статистики)
+    private int bufferIndex = -1;
+    private Charon charon;
 
     public Soul(String id, int sourceId, double arrivalTime) {
         this.id = id;
         this.sourceId = sourceId;
         this.arrivalTime = arrivalTime;
         this.status = SoulStatus.CREATED;
-    }
-
-    // Перегруженный конструктор для обратной совместимости
-    public Soul(int sourceId, double arrivalTime) {
-        this(sourceId + "-0", sourceId, arrivalTime);
     }
 
     public String getId() {
@@ -40,6 +37,22 @@ public class Soul {
 
     public double getServiceStartTime() {
         return serviceStartTime;
+    }
+
+    public void setCharon(Charon charon) {
+        this.charon = charon;
+    }
+
+    public Charon getCharon() {
+        return charon;
+    }
+
+    public void setBufferIndex(int bufferIndex) {
+        this.bufferIndex = bufferIndex;
+    }
+
+    public int getBufferIndex() {
+        return bufferIndex;
     }
 
     public void setServiceStartTime(double serviceStartTime) {
@@ -94,14 +107,6 @@ public class Soul {
 
     public void setRejectionTime(double rejectionTime) {
         this.rejectionTime = rejectionTime;
-    }
-
-    // В класс Soul.java добавить:
-    public double getTimeInQueue() {
-        if (serviceStartTime > 0 && bufferEntryTime > 0) {
-            return serviceStartTime - bufferEntryTime;
-        }
-        return 0.0;
     }
 
     public double getTimeInSystem() {

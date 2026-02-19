@@ -1,91 +1,110 @@
 package main.simulation;
 
 import main.model.*;
+import main.utils.EventLogger;
 
 import java.util.List;
 
 public class Simulation {
 
     private final EventCalendar calendar;
+    private final Cerberus cerberus;
     private final Hades hades;
     private final List<Source> sources;
-    private double currentTime = 0.0;
-    private boolean initialized = false;
+    private final boolean isStep;
 
-    public Simulation(EventCalendar calendar, Hades hades, List<Source> sources) {
+    private double currentTime = 0.0;
+    private static final double EPS = 1e-6;
+
+    public Simulation(EventCalendar calendar,
+                      Cerberus cerberus,
+                      Hades hades,
+                      List<Source> sources,
+                      boolean isStep) {
+
         this.calendar = calendar;
+        this.cerberus = cerberus;
         this.hades = hades;
         this.sources = sources;
+        this.isStep = isStep;
     }
 
-    /**
-     * Инициализация симуляции:
-     * - Запускаем генерацию от всех источников
-     * - Создаём первое решение Аида
-     */
-    public void init() {
-        if (!initialized) {
-            for (Source s : sources) {
-                s.startGenerating(currentTime);
-            }
-            calendar.add(new Event(currentTime, EventType.HADES_DECISION, null));
-            initialized = true;
-        }
-    }
-
-    /**
-     * ОСНОВНОЙ МЕТОД: обрабатывает ОДНО ближайшее событие.
-     * Используй ЭТОТ метод для пошагового режима!
-     */
     public boolean processNextEvent() {
         if (calendar.isEmpty()) return false;
 
-        Event e = calendar.next();
-        currentTime = e.getTime();
-        hades.handle(e, currentTime);
+        Event event = calendar.next();
+        currentTime = event.getTime();
+
+        handleEvent(event);
         return true;
     }
 
-    /**
-     * Альтернативный метод для симуляции с фиксированным шагом по времени.
-     * Может обработать несколько событий за один шаг.
-     */
-    public List<Event> tick(double deltaTime) {
-        double targetTime = currentTime + deltaTime;
-        List<Event> stepEvents = new java.util.ArrayList<>();
+    private void handleEvent(Event event) {
 
-        while (!calendar.isEmpty() && calendar.peek().getTime() <= targetTime) {
-            Event e = calendar.next();
-            currentTime = e.getTime();
-            hades.handle(e, currentTime);
-            stepEvents.add(e);
+        switch (event.getType()) {
+
+            case SOUL_ARRIVED -> handleArrival(event);
+
+            case HADES_DECISION -> handleDecision();
+
+            case CHARON_FINISHED -> handleFinish(event);
         }
-
-        if (currentTime < targetTime) {
-            currentTime = targetTime;
-        }
-
-        return stepEvents;
     }
 
-    /**
-     * Возвращает следующее событие без его обработки (для логирования)
-     */
-    public Event getNextEvent() {
-        return calendar.peek();
+    private void handleArrival(Event event) {
+        Soul soul = event.getSoul();
+
+        if(isStep) EventLogger.logSoulArrival(soul, currentTime);
+
+        Soul rejected = cerberus.handleArrival(soul, currentTime);
+        if (rejected == null) {
+            if(isStep) EventLogger.logCerberusInsert(soul, soul.getBufferIndex());
+        } else {
+            if(isStep) EventLogger.logCerberusReject(rejected, soul, soul.getBufferIndex());
+        }
+
+        Source source = findSourceById(soul.getSourceId());
+        if (source != null) {
+            source.scheduleNext(currentTime);
+        }
+
+        calendar.add(new Event(currentTime + EPS,
+                EventType.HADES_DECISION,
+                null));
     }
 
-    /**
-     * Текущее время симуляции
-     */
+    private void handleDecision() {
+
+        Event finishEvent = hades.makeDecision(currentTime);
+
+        if (finishEvent != null) {
+            calendar.add(finishEvent);
+            if(isStep) EventLogger.logHadesDecision(finishEvent.getSoul(), finishEvent.getSoul().getCharon());
+        } else {
+            if(isStep) EventLogger.logHadesSleeps();
+        }
+    }
+
+    private void handleFinish(Event event) {
+
+        Soul soul = event.getSoul();
+
+        hades.finishService(soul);
+        if(isStep) EventLogger.logCharonFinish(soul.getCharon(), soul, currentTime);
+
+        calendar.add(new Event(currentTime + EPS,
+                EventType.HADES_DECISION,
+                null));
+    }
+
+    private Source findSourceById(int id) {
+        return sources.stream()
+                .filter(s -> s.getSourceId() == id)
+                .findFirst()
+                .orElse(null);
+    }
+
     public double getCurrentTime() {
         return currentTime;
-    }
-
-    /**
-     * Проверка, завершена ли симуляция
-     */
-    public boolean isFinished() {
-        return calendar.isEmpty() && hades.isIdle();
     }
 }

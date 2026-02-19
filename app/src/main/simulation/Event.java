@@ -25,13 +25,4 @@ public class Event {
     public Soul getSoul() {
         return soul;
     }
-
-    public String describe() {
-        return switch (type) {
-            case SOUL_ARRIVED -> "📌 Soul " + soul.getId() + " arrived";
-            case HADES_DECISION -> "👑 Hades decision";
-            case CHARON_FINISHED ->  "🏁 Soul " + soul.getId() + " delivered";
-        };
-    }
-
 }

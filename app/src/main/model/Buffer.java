@@ -81,13 +81,5 @@ public class Buffer {
         } else if (old != null && soul == null) {
             currentSize--;  // удалили душу
         }
-        // если old != null && soul != null - замена, размер не меняется
-    }
-
-    // ✅ Добавляем метод для явного уменьшения счетчика (для Hades)
-    public void decrementCurrentSize() {
-        if (currentSize > 0) {
-            currentSize--;
-        }
     }
 }
