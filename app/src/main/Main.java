@@ -20,7 +20,7 @@ public class Main {
         Buffer buffer = new Buffer(4);
         Cerberus cerberus = new Cerberus(buffer);
 
-        double mu = 0.5;
+        double mu = 2.5;
         List<Charon> charons = new ArrayList<>();
         charons.add(new Charon("Charon-1", mu));
         charons.add(new Charon("Charon-2", mu));
@@ -34,12 +34,14 @@ public class Main {
 
         Hades hades = new Hades(buffer, charons);
 
+        Statistics stats = new Statistics();
         Simulation simulation = new Simulation(
                 calendar,
                 cerberus,
                 hades,
                 sources,
-                stepMode
+                stepMode,
+                stats
         );
 
         initSources(sources);
@@ -47,7 +49,7 @@ public class Main {
         if (stepMode) {
             runStepMode(simulation, buffer, charons);
         } else {
-            runAutoMode(simulation, buffer, charons, 5.0);
+            runAutoMode(simulation, buffer, charons, 10.0);
         }
     }
 
@@ -104,6 +106,6 @@ public class Main {
 
         System.out.println("\n✅ Симуляция завершена за " + timeElapsed + " мс");
         System.out.println("📊 Всего обработано событий: " + eventCount);
-
+        sim.getStatistics().printFinalReport(timeElapsed);
     }
 }

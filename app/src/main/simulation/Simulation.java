@@ -2,6 +2,7 @@ package main.simulation;
 
 import main.model.*;
 import main.utils.EventLogger;
+import main.utils.Statistics;
 
 import java.util.List;
 
@@ -12,6 +13,7 @@ public class Simulation {
     private final Hades hades;
     private final List<Source> sources;
     private final boolean isStep;
+    private final Statistics statistics;  // ✅ Добавляем статистику
 
     private double currentTime = 0.0;
     private static final double EPS = 1e-6;
@@ -20,13 +22,15 @@ public class Simulation {
                       Cerberus cerberus,
                       Hades hades,
                       List<Source> sources,
-                      boolean isStep) {
+                      boolean isStep,
+                      Statistics statistics) {  // ✅ Добавляем в конструктор
 
         this.calendar = calendar;
         this.cerberus = cerberus;
         this.hades = hades;
         this.sources = sources;
         this.isStep = isStep;
+        this.statistics = statistics;
     }
 
     public boolean processNextEvent() {
@@ -35,7 +39,14 @@ public class Simulation {
         Event event = calendar.next();
         currentTime = event.getTime();
 
+        // ✅ Обновляем статистику перед обработкой события
+        if(!isStep) statistics.updateBeforeEvent(currentTime, hades.getBuffer(), hades.getCharons());
+
         handleEvent(event);
+
+        // ✅ Обновляем статистику после обработки события
+        if(!isStep) statistics.updateAfterEvent(currentTime, hades.getBuffer(), hades.getCharons());
+
         return true;
     }
 
@@ -55,12 +66,18 @@ public class Simulation {
         Soul soul = event.getSoul();
 
         if(isStep) EventLogger.logSoulArrival(soul, currentTime);
+        else statistics.registerSoulCreated(soul);
 
         Soul rejected = cerberus.handleArrival(soul, currentTime);
         if (rejected == null) {
             if(isStep) EventLogger.logCerberusInsert(soul, soul.getBufferIndex());
+            else statistics.registerSoulBuffered(soul);
         } else {
             if(isStep) EventLogger.logCerberusReject(rejected, soul, soul.getBufferIndex());
+            else {
+                statistics.registerSoulRejected(rejected, currentTime);
+                statistics.registerSoulBuffered(soul);
+            }
         }
 
         Source source = findSourceById(soul.getSourceId());
@@ -80,6 +97,8 @@ public class Simulation {
         if (finishEvent != null) {
             calendar.add(finishEvent);
             if(isStep) EventLogger.logHadesDecision(finishEvent.getSoul(), finishEvent.getSoul().getCharon());
+            // ✅ Регистрируем начало обслуживания
+            statistics.registerServiceStarted(finishEvent.getSoul(), currentTime);
         } else {
             if(isStep) EventLogger.logHadesSleeps();
         }
@@ -91,6 +110,7 @@ public class Simulation {
 
         hades.finishService(soul);
         if(isStep) EventLogger.logCharonFinish(soul.getCharon(), soul, currentTime);
+        else statistics.registerServiceCompleted(soul, currentTime);
 
         calendar.add(new Event(currentTime + EPS,
                 EventType.HADES_DECISION,
@@ -106,5 +126,10 @@ public class Simulation {
 
     public double getCurrentTime() {
         return currentTime;
+    }
+
+    // ✅ Геттер для статистики
+    public Statistics getStatistics() {
+        return statistics;
     }
 }
